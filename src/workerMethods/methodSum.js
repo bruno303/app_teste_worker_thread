@@ -1,8 +1,23 @@
-const worker_threads = require('worker_threads');
+'use strict'
 
+const worker_threads = require('worker_threads');
+const WorkerResult = require('./../worker/WorkerResult.js');
+
+/* Load sum function */
 const sum = require('./../methods/sum.js');
 
-const params = worker_threads.workerData;
+/* Process on message event */
+worker_threads.parentPort.on('message', msg => {
 
-const result = sum(params.maxSum);
-worker_threads.parentPort.postMessage({ err: null, result });
+    let workerResult = new WorkerResult();
+
+    try {
+        workerResult.result = sum(msg.maxSum);
+    }
+    catch(err) {
+        workerResult.err = err;
+    }
+
+    /* Answer with object */
+    worker_threads.parentPort.postMessage(workerResult);
+});

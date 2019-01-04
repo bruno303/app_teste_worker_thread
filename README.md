@@ -1,5 +1,5 @@
 # app_teste_worker_thread
-Testes para execução de processamentos em CPU em threads com nodejs.
+Testes para execução de processamentos em CPU em um pool de worker threads com nodejs.
 
 ## Introdução
 
@@ -33,9 +33,14 @@ npm start
 * Utilize as duas rotas para a realização dos testes de bloqueio da thread principal
 
 ```
-http://127.0.0.1:3000/sync?max=150000000
-http://127.0.0.1:3000/async?max=150000000
+http://127.0.0.1:3000/async/100000000
+http://127.0.0.1:3000/sync/100
+
+http://127.0.0.1:3000/sync/100000000
+http://127.0.0.1:3000/async/100
 ```
+
+* Utilize outros valores para simular operações mais leves ou pesadas.
 
 ## Autores
 

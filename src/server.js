@@ -1,29 +1,38 @@
+'use strict'
+
 const port = 3000;
 const express = require('express');
 const app = express();
-const log = require('./logger.js')();
-const workerSum = require('./workers/workerSum.js');
+const log = require('./logger.js')(false);
+const Pool = require('./Pool.js');
+const pool = new Pool();
 
-app.route('/async')
+/* Async Route */
+app.route('/async/:num')
 .get((req, res) => {
-    log.gravarLogExecucao('Execução assíncrona iniciada.');
-    workerSum.createWorker('./src/workerMethods/methodSum.js', (err, result) => {
+    log.registerLogExec('Execução assíncrona iniciada.');
+
+    /* Send to pool queue */
+    pool.enqueue('./src/workerMethods/methodSum.js', { maxSum: req.params.num }, (err, result) => {
         if(err) {
-            log.gravarLogErro(err);
+            res.status(500).send(`Erro: ${JSON.stringify(err)}`);
         } else {
-            res.end(`The sum is ${result}`);
+            res.status(200).send(JSON.stringify(result));
         }
-    }, { maxSum: req.query.max });
+    });
 });
 
-app.route('/sync')
+/* Sync Route */
+app.route('/sync/:num')
 .get((req, res) => {
-    log.gravarLogExecucao('Execução síncrona iniciada.');
+    log.registerLogExec('Execução síncrona iniciada.');
     const sum = require('./methods/sum.js');
-    let result = sum(req.query.max);
-    res.end(`The sum is ${result}`);
+
+    /* Run in the Event Loop thread */
+    let result = sum(req.params.num);
+    res.status(200).send(result);
 });
 
 app.listen(port, () => {
-    log.gravarLogExecucao(`Executando em: http://127.0.0.1:${port}.`);
+    log.registerLogExec(`Executando em: http://127.0.0.1:${port}.`);
 });
