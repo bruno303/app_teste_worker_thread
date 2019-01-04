@@ -1,47 +1,52 @@
 'use strict'
 
-const worker_threads = require('worker_threads');
-const log = require('./logger.js')();
-const Workers = require('./Workers.js');
-
-function createWorker(path, callback, params = {}){
-    const worker = new worker_threads.Worker(path, { workerData: params });
-    worker.ref();
-    worker.on('message', obj => {
-        callback(obj.err, obj.result);
-    });
-
-    worker.on('error', callback);
-
-    worker.on('exit', (code) => {
-        if (code !== 0) {
-            log.gravarLogErro(`Thread died with code ${code}!`);
-        } else {
-            log.gravarLogExecucao(`Thread died!`);
-        }
-    });
-
-    return worker;
-}
+const Workers = require('./worker/Workers.js');
+const WorkerResult = require('./worker/WorkerResult.js');
 
 function Pool(opts) {
     this.opts = opts || {};
+    let workers = new Workers();
+
     this.max = this.opts.max || require('os').cpus().length;
-    this.workers = new Workers();
 
-    this.enqueue = function(path, callback, args = {}) {
-        if(this.workers.getSize() < this.max) {
+    this.getSize = function() {
+        return workers.getSize();
+    }
 
-            const worker = createWorker(path, callback, args);
-            worker.on('message', obj => {
-                this.workers.remove(worker);
-            });
+    this.enqueue = function(path, args, callback) {
+        try {
+            if (this.getSize() < this.max) {
 
-            this.workers.add(worker);
+                workers.createWorker(path, args, callback, true);
+
+            } else {
+                this.tryAllocate(path, args, callback);
+            }
+        }
+        catch(err) {
+            let workerResult = new WorkerResult();
+            workerResult.err = { message: err, path, args, cb: callback };
+            workerResult.result = null;
+            callback(workerResult.err, workerResult.result);
+        }
+    }
+
+    this.tryAllocate = function(path, args, callback) {
+        let workerFree = workers.getFreeWorker();
+        if (workerFree !== undefined) {
+            workerFree.callback = callback;
+            workerFree.run(args);
         }
         else {
-            callback('Queue is full!', null);
+            let workerResult = new WorkerResult();
+            workerResult.err = { message: 'full', path, args, cb: callback };
+            workerResult.result = null;
+            callback(workerResult.err, workerResult.result);
         }
+    }
+
+    this.terminateAll = function() {
+        workers.terminateAll();
     }
 }
 
