@@ -1,20 +1,19 @@
-'use strict'
+"use strict"
 
 const worker_threads = require('worker_threads');
 
-worker_threads.Worker.prototype.busy = false;
-
-function Worker(path, args, callback) {
+function Worker(callbackExit) {
 
     /* Internal worker thread */
-    const _worker = new worker_threads.Worker(path, { workerData: args });
+    const _worker = new worker_threads.Worker(`${__dirname}\\workerThreadExecutor.js`, { workerData: null });
     this.busy = false;
-    this.callback = callback;
+    this.callback = null;
 
     /* Send a message to start execution */
-    this.run = function(args) {
+    this.run = function(method, args, callback) {
         this.busy = true;
-        _worker.postMessage(args);
+        this.callback = callback;
+        _worker.postMessage({ method, args });
     }
 
     /* Listen message event for the result */
@@ -28,6 +27,10 @@ function Worker(path, args, callback) {
         this.busy = false;
         this.callback(err, null);
     });
+
+    _worker.on('exit', exitCode => {
+        callbackExit(exitCode);
+    })
 
     /* Terminate the worker thread */
     this.terminate = function(){

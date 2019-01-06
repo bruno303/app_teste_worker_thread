@@ -2,25 +2,36 @@
 
 const Worker = require('./Worker.js');
 
-function Workers() {
+function Workers(methodsPath) {
+    this.methodsPath = methodsPath;
+
     /* Array to keep the threads */
     let workers = [];
 
     /* Return number of threads */
     this.getSize = function() {
         return workers.length;
-    }   
+    }
+
+    this.remove = function(worker) {
+        const index = workers.indexOf(worker);
+        if (index !== -1) {
+            workers.splice(index, 1);
+        }
+    }
 
     /* Create a new Worker Thread, insert into array and start the execution */
-    this.createWorker = function(path, args, callback, start = false) {
-        let worker = new Worker(path, args, callback);
+    this.createWorker = function(method, args, callback, start = false) {
+        let worker = new Worker(exitCode => {
+            this.remove(worker);
+        });
 
         /* Add thread on the array */
         workers.push(worker);
 
         /* Start processing */
         if (start) {
-            worker.run(args);
+            worker.run(method, args, callback);
         }
     }
 

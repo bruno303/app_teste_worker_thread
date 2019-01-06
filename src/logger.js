@@ -1,4 +1,4 @@
-'use strict'
+"use strict"
 
 function Logger(canRegExecLog) {
     this.canRegExecLog = canRegExecLog;

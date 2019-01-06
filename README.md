@@ -30,14 +30,17 @@ npm i nodemon -g
 npm start
 ```
 
-* Utilize as duas rotas para a realização dos testes de bloqueio da thread principal
+* Utilize as rotas para a realização dos testes de bloqueio da thread principal
 
 ```
-http://127.0.0.1:3000/async/100000000
-http://127.0.0.1:3000/sync/100
+http://127.0.0.1:3000/syncsum/100000000
+http://127.0.0.1:3000/asyncsum/100
 
-http://127.0.0.1:3000/sync/100000000
-http://127.0.0.1:3000/async/100
+http://127.0.0.1:3000/syncfibo/100000000
+http://127.0.0.1:3000/asyncfibo/100
+
+http://127.0.0.1:3000/syncmultip/100000000/100000000
+http://127.0.0.1:3000/asyncmultip/100/15
 ```
 
 * Utilize outros valores para simular operações mais leves ou pesadas.
