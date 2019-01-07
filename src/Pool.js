@@ -13,14 +13,14 @@ function Pool(opts) {
         return workers.getSize();
     }
 
-    this.enqueue = function(method, args, callback) {
+    this.enqueue = function(method, callback, ...args) {
         try {
             if (this.getSize() < this.max) {
 
-                workers.createWorker(method, args, callback, true);
+                workers.createWorker(method.toString(), args, callback, true);
 
             } else {
-                this.tryAllocate(method, args, callback);
+                this.tryAllocate(method.toString(), args, callback);
             }
         }
         catch(err) {

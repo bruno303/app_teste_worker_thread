@@ -12,86 +12,90 @@ const methods = require('./workerMethods/methods.js');
 app.route('/asyncsum/:num')
 .get((req, res) => {
     log.registerLogExec('Execução assíncrona iniciada.');
+    const now = new Date();
 
     /* Send to pool queue */
-    pool.enqueue(methods.sum.toString(), { maxSum: req.params.num }, (err, result) => {
-        if(err) {
-            res.status(500).send(`Erro: ${JSON.stringify(err)}`);
-        } else {
-            res.status(200).send(JSON.stringify(result));
-        }
-    });
+    pool.enqueue(methods.sum,   // function to execute
+        (err, result) => {      // callback called after execution
+            if(err) {
+                res.status(500).send(`Erro: ${JSON.stringify(err)}`);
+            } else {
+                res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
+            }
+        },
+        Number.parseInt(req.params.num)); // parameters
 });
 
 /* Async Fibonacci Route */
 app.route('/asyncfibo/:num')
 .get((req, res) => {
     log.registerLogExec('Execução assíncrona iniciada.');
+    const now = new Date();
 
     /* Send to pool queue */
-    pool.enqueue(methods.fibonacci.toString(), { num: req.params.num }, (err, result) => {
+    pool.enqueue(methods.fibonacci, (err, result) => {
         if(err) {
             res.status(500).send(`Erro: ${JSON.stringify(err)}`);
         } else {
-            res.status(200).send(JSON.stringify(result));
+            res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
         }
-    });
+    }, Number.parseInt(req.params.num));
 });
 
 /* Async Multip Route */
 app.route('/asyncmultip/:num/:num2')
 .get((req, res) => {
     log.registerLogExec('Execução assíncrona iniciada.');
-
-    const func = `
-        function x(obj)
-        {
-            return Number.parseInt(obj.num, 10) * Number.parseInt(obj.num2, 10); 
-        }`
+    const now = new Date();
 
     /* Send to pool queue */
-    pool.enqueue(func, { num: req.params.num, num2: req.params.num2 }, (err, result) => {
-        if(err) {
-            res.status(500).send(`Erro: ${JSON.stringify(err)}`);
-        } else {
-            res.status(200).send(JSON.stringify(result));
-        }
-    });
+    pool.enqueue(
+        (num1, num2) => Number.parseInt(num1, 10) * Number.parseInt(num2, 10),
+        (err, result) => {      // callback called after execution
+            if(err) {
+                res.status(500).send(`Erro: ${JSON.stringify(err)}`);
+            } else {
+                res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
+            }
+    }, Number.parseInt(req.params.num), Number.parseInt(req.params.num2));
 });
 
 /* Sync Sum Route */
 app.route('/syncsum/:num')
 .get((req, res) => {
     log.registerLogExec('Execução síncrona iniciada.');
+    const now = new Date();
     const sum = methods.sum;
 
     /* Run in the Event Loop thread */
-    let result = sum({ maxSum: req.params.num });
-    res.status(200).send(JSON.stringify(result));
+    let result = sum(Number.parseInt(req.params.num));
+    res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
 });
 
 /* Sync Fibonacci Route */
 app.route('/syncfibo/:num')
 .get((req, res) => {
     log.registerLogExec('Execução síncrona iniciada.');
+    const now = new Date();
     const fibo = methods.fibonacci;
 
     /* Run in the Event Loop thread */
-    let result = fibo({ num: req.params.num });
-    res.status(200).send(JSON.stringify(result));
+    let result = fibo(Number.parseInt(req.params.num));
+    res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
 });
 
 /* Sync Multip Route */
 app.route('/syncmultip/:num/:num2')
 .get((req, res) => {
     log.registerLogExec('Execução síncrona iniciada.');
-    const multip = function(obj) {
-        return Number.parseInt(obj.num) * Number.parseInt(obj.num2);
+    const now = new Date();
+    const multip = function(num1, num2) {
+        return num1 * num2;
     };
 
     /* Run in the Event Loop thread */
-    let result = multip({ num: req.params.num, num2: req.params.num2 });
-    res.status(200).send(JSON.stringify(result));
+    let result = multip(Number.parseInt(req.params.num), Number.parseInt(req.params.num2));
+    res.status(200).send(`Executed in ${(new Date() - now) / 1000} sec(s). Result: ${JSON.stringify(result)}`);
 });
 
 app.listen(port, () => {

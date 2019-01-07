@@ -17,7 +17,7 @@ worker_threads.parentPort.on('message', obj => {
         }
 
         if (!workerResult.err) {
-            workerResult.result = func(obj.args);
+            workerResult.result = func(...obj.args);
         }
     }
     catch(err) {
@@ -27,5 +27,3 @@ worker_threads.parentPort.on('message', obj => {
     /* Answer with object */
     worker_threads.parentPort.postMessage(workerResult);
 });
-
-module.exports = '1';
